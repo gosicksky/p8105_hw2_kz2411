@@ -7,6 +7,57 @@ output: github_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(readxl)
 ```
 
 ## Problem 1
+```{r read and clean sheet}
+# read and clean Mr. Trash Wheel
+wheel_data <- read_excel('./data/Trash-Wheel-Collection-Totals-7-2020-2.xlsx',
+                         sheet = "Mr. Trash Wheel", range = "A2:N535") %>%
+  janitor::clean_names() %>%
+  drop_na(dumpster) %>%
+  mutate(
+    sports_balls = round(sports_balls,digits = 0)
+  )
+```
+
+```{r}
+# read and clean precipitation data for 2018
+precipitation_2018_data <- read_excel('./data/Trash-Wheel-Collection-Totals-7-2020-2.xlsx',
+                                      sheet = "2018 Precipitation", range = "A2:B14") %>%
+  janitor::clean_names() %>%
+  mutate(
+    year = 2018
+  )
+```
+
+```{r}
+# read and clean precipitation data for 2019
+precipitation_2019_data <- read_excel('./data/Trash-Wheel-Collection-Totals-7-2020-2.xlsx',
+                                      sheet = "2019 Precipitation", range = "A2:B14") %>%
+  janitor::clean_names() %>%
+  mutate(
+    year = 2019
+  )
+```
+
+```{r}
+# combine dataset and convert month
+precipitation_combine_data <- bind_rows(precipitation_2018_data, precipitation_2019_data) %>%
+  mutate(
+    month = month.name[month]
+  )
+```
+
+In Mr. Trash wheel dataset, there are `r nrow(wheel_data)` observations and `r ncol(wheel_data)` variables, such as "weight_tons" and "plastic bottles" which are `r class(pull(wheel_data,"weight_tons"))` and `r class(pull(wheel_data,"plastic_bottles"))` respectively.
+
+In the combination dataset, there are there are `r nrow(precipitation_combine_data)` observations and `r ncol(precipitation_combine_data)` variables, which are year, month and total. And their types are `r class(pull(precipitation_combine_data,"year"))`, `r class(pull(precipitation_combine_data,"month"))` and `r class(pull(precipitation_combine_data,"total"))`.
+
+The total precipitation in 2018 is `r sum(pull(precipitation_2018_data,"total"))`.
+
+The median number of sports balls in a dumpster in 2019 is `r median(pull(filter(wheel_data, year == 2019),"sports_balls"))`.
+
+
+## Problem 2
