@@ -114,4 +114,77 @@ combine_data <- left_join(pols_month_data, snp_data, by = c('year','month')) %>%
   left_join(unemployment_data,by = c('year','month'))
 ```
 
+The dimension of data in pols-month.csv is (`r dim(pols_month_data)`) and the range of years is `r max(pull(pols_month_data, "year")) -  min(pull(pols_month_data, "year"))`. The key variables are year, month and president.
+
+The dimension of data in snap_csv is (`r dim(snp_data)`) and the range of years is `r max(pull(snp_data, "year")) -  min(pull(snp_data, "year"))`. The key variables are year, month and close.
+
+The dimension of data in unemployment.csv is (`r dim(unemployment_data)`) and the range of years is `r max(pull(unemployment_data, "year")) -  min(pull(unemployment_data, "year"))`. The key variables are year, month and unemployment_precentage.
+
+The dimension of data in the combination data is (`r dim(combine_data)`) and the range of years is `r max(pull(combine_data, "year")) -  min(pull(combine_data, "year"))`. The key variables are year, month,  president, close and unemployment_precentage.
+
 ## Problem 3
+```{r}
+#import and clean data
+name_data <- read_csv(file = './data/name.csv') %>%
+  janitor::clean_names() %>%
+  mutate(
+    gender = str_to_title(gender),
+    ethnicity = str_to_title(ethnicity),
+    childs_first_name = str_to_title(childs_first_name)
+  ) %>%
+  distinct()
+```
+
+```{r}
+#produce a table for Olivia
+olivia_data = filter(name_data,childs_first_name == "Olivia" & gender == "Female") %>%
+  pivot_wider(
+    year_of_birth,
+    names_from = "ethnicity",
+    values_from = "rank"
+  ) %>%
+  janitor::clean_names()
+```
+
+```{r}
+#find the most popular name among male children
+male_name_number <- name_data %>%
+  filter(gender == "Male") %>%
+  mutate(
+    count = as.numeric(count)
+  ) %>%
+  group_by(childs_first_name) %>%
+  summarize(
+    count_total = sum(count)
+  ) %>%
+  arrange(desc(count_total))
+head(male_name_number, 5)
+```
+
+Choose Ethan as themost popular name among male children over time
+
+```{r}
+#produce a table for Ethan
+ethan_data = filter(name_data,childs_first_name == "Ethan" & gender == "Male") %>%
+  pivot_wider(
+    year_of_birth,
+    names_from = "ethnicity",
+    values_from = "rank"
+  ) %>%
+  janitor::clean_names()
+```
+
+```{r}
+#produce a scatter plot
+plot_data <- name_data %>%
+  filter(year_of_birth == "2016" & ethnicity == "White Non Hispanic" & gender == "Male")
+
+ggplot(plot_data, aes(x = rank, y = count)) +
+  geom_point() + 
+  labs(
+    x = "rank in popularity",
+    y = "number of children"
+  )
+```
+
+
