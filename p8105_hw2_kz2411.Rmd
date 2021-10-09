@@ -9,6 +9,7 @@ output: github_document
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(readxl)
+library(lubridate)
 ```
 
 ## Problem 1
@@ -61,3 +62,56 @@ The median number of sports balls in a dumpster in 2019 is `r median(pull(filter
 
 
 ## Problem 2
+```{r}
+# clean pols-month.csv
+pols_month_data <- read_csv(file = './data/fivethirtyeight_datasets/pols-month.csv') %>%
+  janitor::clean_names() %>%
+  separate(mon, c("year","month","day"), sep = "-") %>%
+  mutate(
+    month = month.name[as.numeric(month)],
+    year = as.numeric(year),
+    president = prez_gop,
+    president = replace(president, president == 1, "gop"),
+    president = replace(president, president == 0, "dem"),
+  ) %>%
+  select(-day)
+```
+
+```{r}
+# clean the snp.csv
+snp_data <- read_csv(file = './data/fivethirtyeight_datasets/snp.csv') %>%
+  janitor::clean_names() %>%
+  mutate(
+    date = as.character(mdy(date))
+  ) %>%
+  separate(date, c("year","month","day"), sep = "-") %>%
+  mutate(
+    month = month.name[as.numeric(month)],
+    year = as.numeric(year),
+    year = ifelse(year > 2021, year - 100, year)
+  ) %>%
+  select(year,month,everything(),-day)
+```
+
+```{r}
+# clean the unemployment data
+# To ensure that key variables take the same values, convert abb to full name
+unemployment_data <- read_csv(file = './data/fivethirtyeight_datasets/unemployment.csv') %>%
+  pivot_longer(
+    Jan:Dec,
+    names_to = "month",
+    values_to = "unemployment_precentage"
+  ) %>%
+  mutate(
+    month = month.name[match(month,month.abb)]
+  ) %>%
+  janitor::clean_names()
+```
+
+```{r}
+# join the datasets
+combine_data <- left_join(pols_month_data, snp_data, by = c('year','month')) %>%
+  left_join(unemployment_data,by = c('year','month'))
+```
+
+## Problem 3
